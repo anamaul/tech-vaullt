@@ -2,6 +2,7 @@ pipeline {
     agent any
 
     environment {
+        // Menggunakan variabel environment Jenkins
         DOCKER_HUB_USER = 'muhammadmaulana'
     }
 
@@ -20,24 +21,26 @@ pipeline {
                     usernameVariable: 'DOCKER_USER',
                     passwordVariable: 'DOCKER_PASS'
                 )]) {
-                    sh '''
-                        echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
+                    // Menggunakan 'bat' untuk Windows dan format %VARIABLE%
+                    bat """
+                        echo %DOCKER_PASS% | docker login -u %DOCKER_USER% --password-stdin
 
-                        docker build -t $DOCKER_HUB_USER/techvault-backend:latest ./backend
-                        docker build -t $DOCKER_HUB_USER/techvault-frontend:latest ./frontend
+                        docker build -t %DOCKER_HUB_USER%/techvault-backend:latest ./backend
+                        docker build -t %DOCKER_HUB_USER%/techvault-frontend:latest ./frontend
 
-                        docker push $DOCKER_HUB_USER/techvault-backend:latest
-                        docker push $DOCKER_HUB_USER/techvault-frontend:latest
-                    '''
+                        docker push %DOCKER_HUB_USER%/techvault-backend:latest
+                        docker push %DOCKER_HUB_USER%/techvault-frontend:latest
+                    """
                 }
             }
         }
 
         stage('Deploy') {
             steps {
-                withCredentials([file(credentialsId: 'kubeconfig-aks', variable: 'KUBECONFIG')]) {
-                    sh '''
-                        export KUBECONFIG=$KUBECONFIG
+                withCredentials([file(credentialsId: 'kubeconfig-aks', variable: 'KUBECONFIG_FILE')]) {
+                    bat """
+                        @echo off
+                        set KUBECONFIG=%KUBECONFIG_FILE%
 
                         kubectl apply -f k8s/backend-deployment.yaml
                         kubectl apply -f k8s/backend-service.yaml
@@ -47,7 +50,7 @@ pipeline {
 
                         kubectl rollout restart deployment/backend-deployment
                         kubectl rollout restart deployment/frontend-deployment
-                    '''
+                    """
                 }
             }
         }
