@@ -1,0 +1,1032 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="TechVault — Katalog Gadget & Teknologi Terkini">
+    <title>TechVault — Katalog Gadget & Teknologi</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        /* ============================================================
+           CSS RESET & VARIABEL GLOBAL
+           ============================================================
+           Penjelasan:
+           - :root mendefinisikan CSS Custom Properties (variabel)
+           - Semua warna, ukuran, dan efek disimpan di sini supaya
+             mudah diubah di satu tempat (design tokens)
+        */
+        :root {
+            --bg-primary: #0a0e17;
+            --bg-secondary: #111827;
+            --bg-card: rgba(17, 24, 39, 0.7);
+            --bg-glass: rgba(255, 255, 255, 0.03);
+            --border-color: rgba(0, 255, 170, 0.15);
+            --border-glow: rgba(0, 255, 170, 0.3);
+            --accent-primary: #00ffaa;
+            --accent-secondary: #00d4ff;
+            --accent-tertiary: #7c3aed;
+            --text-primary: #f0fdf4;
+            --text-secondary: #94a3b8;
+            --text-muted: #64748b;
+            --danger: #ef4444;
+            --success: #22c55e;
+            --gradient-main: linear-gradient(135deg, #00ffaa, #00d4ff);
+            --gradient-card: linear-gradient(145deg, rgba(0,255,170,0.05), rgba(0,212,255,0.02));
+            --shadow-glow: 0 0 30px rgba(0, 255, 170, 0.08);
+            --shadow-card: 0 8px 32px rgba(0, 0, 0, 0.3);
+            --radius-sm: 8px;
+            --radius-md: 12px;
+            --radius-lg: 16px;
+            --radius-xl: 24px;
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        /* ============================================================
+           BODY & BACKGROUND
+           ============================================================
+           Penjelasan:
+           - Background gradient gelap memberikan kesan "tech/cyber"
+           - ::before membuat grid pattern overlay (efek matrix)
+           - ::after membuat blob bercahaya di background
+        */
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background-image: 
+                radial-gradient(circle at 1px 1px, rgba(0,255,170,0.03) 1px, transparent 0);
+            background-size: 40px 40px;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        body::after {
+            content: '';
+            position: fixed;
+            top: -50%; left: -50%;
+            width: 200%; height: 200%;
+            background: 
+                radial-gradient(circle at 20% 50%, rgba(0,255,170,0.04) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(0,212,255,0.04) 0%, transparent 50%),
+                radial-gradient(circle at 40% 80%, rgba(124,58,237,0.03) 0%, transparent 50%);
+            animation: bgFloat 20s ease-in-out infinite;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        @keyframes bgFloat {
+            0%, 100% { transform: translate(0, 0) rotate(0deg); }
+            33% { transform: translate(30px, -30px) rotate(1deg); }
+            66% { transform: translate(-20px, 20px) rotate(-1deg); }
+        }
+
+        /* ============================================================
+           LOADING SCREEN
+           ============================================================
+           Penjelasan:
+           - Ditampilkan saat website pertama kali dimuat
+           - Spinner menggunakan CSS border-top trick
+           - Dihilangkan via JavaScript setelah data API berhasil dimuat
+        */
+        .loading-screen {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: var(--bg-primary);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            transition: opacity 0.5s, visibility 0.5s;
+        }
+
+        .loading-screen.hidden {
+            opacity: 0;
+            visibility: hidden;
+        }
+
+        .loading-spinner {
+            width: 48px; height: 48px;
+            border: 3px solid rgba(0,255,170,0.1);
+            border-top: 3px solid var(--accent-primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        .loading-text {
+            margin-top: 16px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 14px;
+            color: var(--accent-primary);
+            letter-spacing: 2px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* ============================================================
+           CONTAINER UTAMA
+           ============================================================ */
+        .app-container {
+            position: relative;
+            z-index: 1;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 24px 20px 60px;
+        }
+
+        /* ============================================================
+           HEADER / HERO SECTION
+           ============================================================
+           Penjelasan:
+           - Glassmorphism effect menggunakan backdrop-filter: blur
+           - border semi-transparan untuk efek kaca
+           - .status-badge menunjukkan status koneksi backend
+        */
+        .hero {
+            text-align: center;
+            padding: 48px 32px;
+            margin-bottom: 40px;
+            background: var(--bg-glass);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-xl);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: var(--gradient-card);
+            pointer-events: none;
+        }
+
+        .hero-icon {
+            font-size: 56px;
+            margin-bottom: 16px;
+            display: inline-block;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        .hero h1 {
+            font-size: clamp(1.8rem, 4vw, 2.8rem);
+            font-weight: 800;
+            background: var(--gradient-main);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 8px;
+            letter-spacing: -0.5px;
+            position: relative;
+        }
+
+        .hero-subtitle {
+            font-size: 15px;
+            color: var(--text-secondary);
+            margin-bottom: 24px;
+            font-weight: 400;
+        }
+
+        /* ============================================================
+           INFO BADGE (Pemilik & NIM)
+           ============================================================
+           Penjelasan:
+           - Menampilkan data dari backend API (nama & NIM)
+           - Jika env var tidak di-set → "Misterius" / "00000000"
+           - Styled sebagai badge/chip modern
+        */
+        .owner-info {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .info-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 20px;
+            background: rgba(0, 255, 170, 0.06);
+            border: 1px solid var(--border-color);
+            border-radius: 999px;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--accent-primary);
+            font-family: 'JetBrains Mono', monospace;
+            transition: var(--transition);
+        }
+
+        .info-badge:hover {
+            background: rgba(0, 255, 170, 0.12);
+            border-color: var(--border-glow);
+            box-shadow: 0 0 20px rgba(0, 255, 170, 0.1);
+        }
+
+        .info-badge .badge-icon {
+            font-size: 16px;
+        }
+
+        /* ============================================================
+           STATUS BAR
+           ============================================================ */
+        .status-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+            padding: 12px 20px;
+            background: var(--bg-glass);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            backdrop-filter: blur(10px);
+        }
+
+        .status-left {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            color: var(--text-secondary);
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .status-dot {
+            width: 8px; height: 8px;
+            border-radius: 50%;
+            background: var(--success);
+            box-shadow: 0 0 8px rgba(34, 197, 94, 0.5);
+            animation: blink 2s ease-in-out infinite;
+        }
+
+        .status-dot.error {
+            background: var(--danger);
+            box-shadow: 0 0 8px rgba(239, 68, 68, 0.5);
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.4; }
+        }
+
+        .item-count {
+            font-size: 13px;
+            color: var(--accent-primary);
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 600;
+        }
+
+        /* ============================================================
+           CARD GRID
+           ============================================================
+           Penjelasan:
+           - CSS Grid dengan auto-fill → otomatis responsive
+           - Setiap card minWidth 300px, expand kalau ada ruang
+           - Card menggunakan glassmorphism + hover animation
+        */
+        .catalogue-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+
+        .gadget-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-lg);
+            padding: 24px;
+            transition: var(--transition);
+            position: relative;
+            overflow: hidden;
+            backdrop-filter: blur(10px);
+            cursor: default;
+        }
+
+        .gadget-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: var(--gradient-card);
+            opacity: 0;
+            transition: var(--transition);
+            pointer-events: none;
+        }
+
+        .gadget-card:hover {
+            border-color: var(--border-glow);
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-glow), var(--shadow-card);
+        }
+
+        .gadget-card:hover::before {
+            opacity: 1;
+        }
+
+        .card-header {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            margin-bottom: 16px;
+        }
+
+        .card-emoji {
+            font-size: 36px;
+            line-height: 1;
+        }
+
+        .card-category {
+            padding: 4px 12px;
+            background: rgba(0, 255, 170, 0.08);
+            border: 1px solid rgba(0, 255, 170, 0.2);
+            border-radius: 999px;
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--accent-primary);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .card-name {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 8px;
+            letter-spacing: -0.3px;
+        }
+
+        .card-spec {
+            font-size: 13px;
+            color: var(--text-secondary);
+            line-height: 1.6;
+            margin-bottom: 16px;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .card-price {
+            font-size: 20px;
+            font-weight: 800;
+            background: var(--gradient-main);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        /* ============================================================
+           SECTION HEADERS
+           ============================================================ */
+        .section-title {
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: var(--text-primary);
+        }
+
+        .section-title::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: linear-gradient(to right, var(--border-color), transparent);
+        }
+
+        /* ============================================================
+           FORM TAMBAH ITEM
+           ============================================================
+           Penjelasan:
+           - Form mengirim POST request ke /api/add-item
+           - Semua input memiliki style dark + glow on focus
+           - Button menggunakan gradient accent
+        */
+        .add-form-container {
+            background: var(--bg-glass);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-xl);
+            padding: 32px;
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            margin-bottom: 40px;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .form-group label {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .form-group input,
+        .form-group select {
+            padding: 12px 16px;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-sm);
+            color: var(--text-primary);
+            font-size: 14px;
+            font-family: 'Inter', sans-serif;
+            transition: var(--transition);
+            outline: none;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 0 3px rgba(0, 255, 170, 0.1);
+        }
+
+        .form-group input::placeholder {
+            color: var(--text-muted);
+        }
+
+        .form-group select option {
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+        }
+
+        .btn-submit {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 14px 32px;
+            background: var(--gradient-main);
+            color: var(--bg-primary);
+            border: none;
+            border-radius: var(--radius-sm);
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: var(--transition);
+            font-family: 'Inter', sans-serif;
+            letter-spacing: 0.3px;
+        }
+
+        .btn-submit:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 255, 170, 0.25);
+        }
+
+        .btn-submit:active {
+            transform: translateY(0);
+        }
+
+        .btn-submit:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* ============================================================
+           TOAST NOTIFICATION
+           ============================================================ */
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            padding: 16px 24px;
+            border-radius: var(--radius-md);
+            font-size: 14px;
+            font-weight: 500;
+            z-index: 9999;
+            transform: translateY(100px);
+            opacity: 0;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            backdrop-filter: blur(20px);
+            max-width: 380px;
+        }
+
+        .toast.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        .toast.success {
+            background: rgba(34, 197, 94, 0.15);
+            border: 1px solid rgba(34, 197, 94, 0.3);
+            color: #86efac;
+        }
+
+        .toast.error {
+            background: rgba(239, 68, 68, 0.15);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            color: #fca5a5;
+        }
+
+        /* ============================================================
+           FOOTER
+           ============================================================ */
+        .footer {
+            text-align: center;
+            padding: 24px;
+            color: var(--text-muted);
+            font-size: 12px;
+            font-family: 'JetBrains Mono', monospace;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .footer a {
+            color: var(--accent-primary);
+            text-decoration: none;
+        }
+
+        /* ============================================================
+           EMPTY STATE
+           ============================================================ */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-muted);
+        }
+
+        .empty-state .empty-icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+            opacity: 0.5;
+        }
+
+        /* ============================================================
+           ANIMATIONS
+           ============================================================ */
+        .fade-in {
+            animation: fadeIn 0.5s ease-out forwards;
+            opacity: 0;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .stagger-1 { animation-delay: 0.05s; }
+        .stagger-2 { animation-delay: 0.1s; }
+        .stagger-3 { animation-delay: 0.15s; }
+        .stagger-4 { animation-delay: 0.2s; }
+        .stagger-5 { animation-delay: 0.25s; }
+        .stagger-6 { animation-delay: 0.3s; }
+        .stagger-7 { animation-delay: 0.35s; }
+        .stagger-8 { animation-delay: 0.4s; }
+
+        /* ============================================================
+           RESPONSIVE
+           ============================================================ */
+        @media (max-width: 768px) {
+            .app-container {
+                padding: 16px 12px 40px;
+            }
+
+            .hero {
+                padding: 32px 20px;
+            }
+
+            .catalogue-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .status-bar {
+                flex-direction: column;
+                gap: 8px;
+                text-align: center;
+            }
+
+            .owner-info {
+                flex-direction: column;
+                align-items: center;
+            }
+        }
+
+        /* ============================================================
+           SCROLLBAR CUSTOM
+           ============================================================ */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--bg-primary);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(0, 255, 170, 0.2);
+            border-radius: 3px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(0, 255, 170, 0.4);
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ================================================================
+         LOADING SCREEN
+         ================================================================
+         Ditampilkan saat web pertama kali dibuka.
+         Akan di-hide setelah data berhasil di-fetch dari backend API.
+    -->
+    <div class="loading-screen" id="loadingScreen">
+        <div class="loading-spinner"></div>
+        <div class="loading-text">INITIALIZING TECHVAULT...</div>
+    </div>
+
+    <!-- ================================================================
+         MAIN APP CONTAINER
+         ================================================================ -->
+    <div class="app-container">
+
+        <!-- HERO SECTION -->
+        <header class="hero fade-in" id="heroSection">
+            <div class="hero-icon">🖥️</div>
+            <h1 id="catalogTitle">TechVault</h1>
+            <p class="hero-subtitle" id="catalogDesc">Memuat data katalog...</p>
+            <div class="owner-info">
+                <span class="info-badge">
+                    <span class="badge-icon">👤</span>
+                    <span id="ownerName">—</span>
+                </span>
+                <span class="info-badge">
+                    <span class="badge-icon">🎓</span>
+                    NIM: <span id="ownerNim">—</span>
+                </span>
+            </div>
+        </header>
+
+        <!-- STATUS BAR -->
+        <div class="status-bar fade-in stagger-1">
+            <div class="status-left">
+                <div class="status-dot" id="statusDot"></div>
+                <span id="statusText">Menghubungkan ke server...</span>
+            </div>
+            <div class="item-count" id="itemCount">0 items</div>
+        </div>
+
+        <!-- KATALOG SECTION -->
+        <h2 class="section-title fade-in stagger-2">⚡ Koleksi Gadget</h2>
+        <div class="catalogue-grid" id="catalogGrid">
+            <!-- Cards akan di-render oleh JavaScript -->
+        </div>
+
+        <!-- FORM TAMBAH ITEM -->
+        <h2 class="section-title fade-in stagger-3">➕ Tambah Gadget Baru</h2>
+        <div class="add-form-container fade-in stagger-4">
+            <form id="addItemForm">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="inputNama">Nama Gadget</label>
+                        <input type="text" id="inputNama" placeholder="Contoh: Logitech G Pro X" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="inputKategori">Kategori</label>
+                        <select id="inputKategori" required>
+                            <option value="">— Pilih Kategori —</option>
+                            <option value="GPU">🎮 GPU</option>
+                            <option value="CPU">⚡ CPU</option>
+                            <option value="RAM">🧠 RAM</option>
+                            <option value="Storage">💾 Storage</option>
+                            <option value="Monitor">🖥️ Monitor</option>
+                            <option value="Keyboard">⌨️ Keyboard</option>
+                            <option value="Mouse">🖱️ Mouse</option>
+                            <option value="Headset">🎧 Headset</option>
+                            <option value="Motherboard">🔧 Motherboard</option>
+                            <option value="PSU">🔋 PSU</option>
+                            <option value="Casing">📦 Casing</option>
+                            <option value="Cooling">❄️ Cooling</option>
+                            <option value="Lainnya">📱 Lainnya</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="inputHarga">Harga</label>
+                        <input type="text" id="inputHarga" placeholder="Contoh: Rp 1.500.000" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="inputSpek">Spesifikasi</label>
+                        <input type="text" id="inputSpek" placeholder="Contoh: Wireless, 25K DPI" required>
+                    </div>
+                </div>
+                <button type="submit" class="btn-submit" id="btnSubmit">
+                    <span>⚡</span> Tambah ke Koleksi
+                </button>
+            </form>
+        </div>
+
+        <!-- FOOTER -->
+        <footer class="footer">
+            <p>TechVault &copy; 2026 — Cloud Computing Practicum Module 2</p>
+            <p style="margin-top: 4px;">Powered by Flask &amp; Nginx on Azure AKS with Ingress</p>
+        </footer>
+    </div>
+
+    <!-- TOAST NOTIFICATION -->
+    <div class="toast" id="toast"></div>
+
+    <!-- ================================================================
+         JAVASCRIPT
+         ================================================================
+         Penjelasan alur:
+         1. Saat halaman dimuat → fetch data dari backend /api/info
+         2. Data JSON di-parse → render ke halaman (nama, NIM, items)
+         3. Form submit → POST ke /api/add-item → refresh tampilan
+    -->
+    <script>
+        // ============================================================
+        // KONFIGURASI
+        // ============================================================
+        // API_BASE_URL: Relative path menuju backend.
+        // Menggunakan '/api' agar portabel — bisa jalan di lokal maupun cloud
+        // tanpa perlu ubah kode. Ingress Controller akan route /api ke backend.
+        const API_URL = '/api';
+
+        // ============================================================
+        // EMOJI MAP
+        // ============================================================
+        // Menentukan emoji berdasarkan kategori gadget
+        const EMOJI_MAP = {
+            'GPU': '🎮',
+            'CPU': '⚡',
+            'RAM': '🧠',
+            'Storage': '💾',
+            'Monitor': '🖥️',
+            'Keyboard': '⌨️',
+            'Mouse': '🖱️',
+            'Headset': '🎧',
+            'Motherboard': '🔧',
+            'PSU': '🔋',
+            'Casing': '📦',
+            'Cooling': '❄️',
+            'Lainnya': '📱'
+        };
+
+        // ============================================================
+        // DOM REFERENCES
+        // ============================================================
+        // Mengambil referensi elemen HTML yang akan dimanipulasi
+        const loadingScreen = document.getElementById('loadingScreen');
+        const catalogTitle  = document.getElementById('catalogTitle');
+        const catalogDesc   = document.getElementById('catalogDesc');
+        const ownerName     = document.getElementById('ownerName');
+        const ownerNim      = document.getElementById('ownerNim');
+        const statusDot     = document.getElementById('statusDot');
+        const statusText    = document.getElementById('statusText');
+        const itemCount     = document.getElementById('itemCount');
+        const catalogGrid   = document.getElementById('catalogGrid');
+        const addItemForm   = document.getElementById('addItemForm');
+        const toast         = document.getElementById('toast');
+
+        // ============================================================
+        // FUNGSI: Tampilkan Toast Notification
+        // ============================================================
+        // Penjelasan:
+        // - Menampilkan pesan popup di pojok kanan bawah
+        // - type: 'success' (hijau) atau 'error' (merah)
+        // - Otomatis hilang setelah 3 detik
+        function showToast(message, type = 'success') {
+            toast.textContent = message;
+            toast.className = `toast ${type} show`;
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
+        }
+
+        // ============================================================
+        // FUNGSI: Render satu Card Gadget
+        // ============================================================
+        // Penjelasan:
+        // - Menerima objek item dan index untuk stagger animation
+        // - Membuat elemen HTML card secara dinamis
+        // - Menggunakan template literal (backtick) untuk HTML string
+        // - innerHTML diisi dengan data dari API
+        function createGadgetCard(item, index) {
+            const card = document.createElement('div');
+            card.className = `gadget-card fade-in stagger-${(index % 8) + 1}`;
+
+            // Cek apakah item adalah string (format lama) atau object (format baru)
+            if (typeof item === 'string') {
+                card.innerHTML = `
+                    <div class="card-header">
+                        <span class="card-emoji">📦</span>
+                        <span class="card-category">Item</span>
+                    </div>
+                    <div class="card-name">${item}</div>
+                `;
+            } else {
+                const emoji = item.emoji || EMOJI_MAP[item.kategori] || '📱';
+                card.innerHTML = `
+                    <div class="card-header">
+                        <span class="card-emoji">${emoji}</span>
+                        <span class="card-category">${item.kategori || 'Lainnya'}</span>
+                    </div>
+                    <div class="card-name">${item.nama}</div>
+                    <div class="card-spec">${item.spesifikasi || '-'}</div>
+                    <div class="card-price">${item.harga || '-'}</div>
+                `;
+            }
+
+            return card;
+        }
+
+        // ============================================================
+        // FUNGSI: Render semua Cards ke Grid
+        // ============================================================
+        // Penjelasan:
+        // - Mengosongkan grid terlebih dahulu
+        // - Loop setiap item dari data API
+        // - Buat card dan append ke grid container
+        function renderCatalog(items) {
+            catalogGrid.innerHTML = '';
+
+            if (!items || items.length === 0) {
+                catalogGrid.innerHTML = `
+                    <div class="empty-state" style="grid-column: 1 / -1;">
+                        <div class="empty-icon">📭</div>
+                        <p>Belum ada gadget di koleksi.</p>
+                        <p style="margin-top: 8px; font-size: 13px;">Tambahkan gadget pertamamu menggunakan form di bawah!</p>
+                    </div>
+                `;
+                return;
+            }
+
+            items.forEach((item, index) => {
+                const card = createGadgetCard(item, index);
+                catalogGrid.appendChild(card);
+            });
+
+            // Update jumlah item di status bar
+            itemCount.textContent = `${items.length} item${items.length > 1 ? 's' : ''}`;
+        }
+
+        // ============================================================
+        // FUNGSI: Fetch data dari Backend API
+        // ============================================================
+        // Penjelasan:
+        // fetch() mengirim HTTP GET request ke backend
+        // Response berupa JSON → di-parse menjadi objek JavaScript
+        // Data digunakan untuk mengisi:
+        //   - Judul katalog
+        //   - Nama & NIM pemilik (dari environment variable)
+        //   - Daftar item gadget
+        //
+        // Jika backend tidak bisa dihubungi → tampilkan error
+        async function fetchCatalogData() {
+            try {
+                const response = await fetch(`${API_URL}/info`);
+
+                // Cek apakah response berhasil (status 200-299)
+                if (!response.ok) {
+                    throw new Error(`HTTP Error: ${response.status}`);
+                }
+
+                const data = await response.json();
+
+                // Isi elemen HTML dengan data dari API
+                catalogTitle.textContent = data.judul_katalog || 'TechVault';
+                catalogDesc.textContent = data.deskripsi || 'Katalog Gadget & Teknologi';
+                ownerName.textContent = data.pemilik || 'Misterius';
+                ownerNim.textContent = data.nim || '00000000';
+
+                // Update status koneksi → hijau (berhasil)
+                statusDot.classList.remove('error');
+                statusText.textContent = 'Terhubung ke backend';
+
+                // Render cards
+                renderCatalog(data.items);
+
+                // Sembunyikan loading screen
+                loadingScreen.classList.add('hidden');
+
+            } catch (error) {
+                console.error('Gagal fetch data:', error);
+
+                // Update status → merah (gagal)
+                statusDot.classList.add('error');
+                statusText.textContent = 'Gagal terhubung ke backend';
+                catalogDesc.textContent = 'Tidak dapat menghubungi server backend';
+
+                // Tampilkan halaman walau gagal (tanpa data)
+                loadingScreen.classList.add('hidden');
+                showToast('⚠️ Gagal menghubungi backend server', 'error');
+            }
+        }
+
+        // ============================================================
+        // EVENT: Form Submit → Tambah Item Baru
+        // ============================================================
+        // Penjelasan:
+        // 1. preventDefault() → cegah form melakukan reload halaman
+        // 2. Ambil value dari input fields
+        // 3. Buat objek item baru
+        // 4. Kirim via POST ke /api/add-item
+        // 5. Jika berhasil → refresh data katalog
+        addItemForm.addEventListener('submit', async function(e) {
+            e.preventDefault(); // Cegah reload halaman
+
+            const btnSubmit = document.getElementById('btnSubmit');
+            btnSubmit.disabled = true;
+            btnSubmit.innerHTML = '<span>⏳</span> Mengirim...';
+
+            // Ambil nilai dari form inputs
+            const nama = document.getElementById('inputNama').value.trim();
+            const kategori = document.getElementById('inputKategori').value;
+            const harga = document.getElementById('inputHarga').value.trim();
+            const spesifikasi = document.getElementById('inputSpek').value.trim();
+
+            // Tentukan emoji berdasarkan kategori
+            const emoji = EMOJI_MAP[kategori] || '📱';
+
+            // Buat objek item baru
+            const newItem = {
+                nama: nama,
+                kategori: kategori,
+                harga: harga,
+                spesifikasi: spesifikasi,
+                emoji: emoji
+            };
+
+            try {
+                // Kirim POST request ke backend
+                const response = await fetch(`${API_URL}/add-item`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'  // Beritahu server bahwa body berformat JSON
+                    },
+                    body: JSON.stringify({ item: newItem })  // Ubah objek JS → string JSON
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    // Berhasil! Tampilkan notifikasi & refresh data
+                    showToast(`✅ ${nama} berhasil ditambahkan!`, 'success');
+                    addItemForm.reset(); // Kosongkan form
+                    await fetchCatalogData(); // Refresh tampilan
+                } else {
+                    showToast(`❌ ${result.error || 'Gagal menambahkan item'}`, 'error');
+                }
+
+            } catch (error) {
+                console.error('Error menambah item:', error);
+                showToast('❌ Gagal mengirim data ke server', 'error');
+            } finally {
+                // Kembalikan tombol ke state normal
+                btnSubmit.disabled = false;
+                btnSubmit.innerHTML = '<span>⚡</span> Tambah ke Koleksi';
+            }
+        });
+
+        // ============================================================
+        // INISIALISASI
+        // ============================================================
+        // Saat halaman selesai dimuat → langsung fetch data dari backend
+        document.addEventListener('DOMContentLoaded', function() {
+            fetchCatalogData();
+        });
+    </script>
+</body>
+</html>
